@@ -1,0 +1,40 @@
+Agora ficou claro — o painel atual é um painel de DNS, não um painel de canais. Ele só responde ao app: "seu servidor é este". Isso simplifica muito, e é totalmente reproduzível.
+
+(E sim, sua mensagem chegou — os prints vieram junto.)
+
+Primeiro vou achar no app onde fica o endereço desse painel, que é o que você mais precisa saber:
+
+Executou 36 comandos, criou um arquivo, usou uma ferramenta · 6 notas
+
+Achei o que você mais queria saber, e não estava onde a gente imaginava.
+
+Onde fica o endereço do painel no aplicativo
+
+Está numa única constante compilada dentro do APK:
+
+arquivo: com/ftgtv/ftgiptvbox/a/g$a.smali
+
+public static a = "https://sm.wctvapp.com/aq/api/home.php?"   ← o endereço
+public static b = "action=dns"          ← pede a lista de DNS
+public static c = "action=note"         ← pede os avisos
+public static d = "reset_password"
+
+Uma coisa importante: não existe tela no aplicativo para trocar isso. Vasculhei o app inteiro — código, recursos, manifesto, assets — e esse endereço só existe nesse ponto, gravado no APK. Então, quando você mudar de hospedagem, o caminho é me passar o endereço novo que eu troco essa linha e te devolvo o APK recompilado. É uma alteração de cinco minutos, bem menor que tudo que a gente já fez hoje.
+
+Isso também explica um detalhe: hoje seu app depende do painel do fornecedor (sm.wctvapp.com, da whmcssmarters). Apontando para o seu, você fica dono da operação.
+
+O painel
+
+Fiz em PHP porque hospedagem compartilhada é PHP, e sem exigir banco de dados — usa SQLite, cria tudo sozinho. Sobe a pasta, abre install.php, cria seu usuário, apaga o install.php. Pronto.
+
+Tem as mesmas abas do que você usa hoje — DNS (criar, editar, excluir, ativar/pausar, com ordem de prioridade), Avisos e Senha — mais a Aparelhos, que era o seu pedido: lista cada aparelho pelo MAC, com IP, versão do app, quantos acessos e quando foi o último. Dá para escrever o nome do cliente ao lado de cada MAC. Isso funciona porque o app já manda o MAC dele em toda chamada ao painel — eu só passei a registrar. (De propósito, não gravo a senha que o app envia nessa chamada.)
+
+Não fui pelo layout no chute: li no código decompilado o formato exato das respostas e testei o painel de ponta a ponta aqui. O action=dns devolve http://servidor1:80,http://servidor2:8080 em texto puro, que é como o app separa por vírgula; o action=note devolve o JSON com Title, Description e CreateDate, que é exatamente o que a tela de notificações espera.
+
+Sobre os dois extras que você pediu
+
+Ver os usuários e o MAC: feito.
+
+Atualização remota e cadastrar cliente pelo MAC: hoje não dá sem mexer no app. O aplicativo só pergunta duas coisas ao painel — DNS e avisos — e não tem canal para receber comandos ou credenciais. Dá para eu criar isso (o painel responderia um terceiro comando e o app passaria a consultá-lo), mas é modificação no APK, não só no painel. Sugiro deixar para depois que o painel estiver no ar e funcionando.
+
+Quando você subir na hospedagem, me diga o endereço que aparece no quadro azul da instalação e eu já te devolvo o APK apontando para ele.
